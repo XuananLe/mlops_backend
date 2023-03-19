@@ -12,8 +12,8 @@ const Create = async (req, res) => {
 
 const UploadFiles = async (req, res) => {
   try {
-    await ProjectService.UploadFiles(req)
-    return res.sendStatus(200)
+    const uploadedFiles = await ProjectService.UploadFiles(req)
+    return res.json(uploadedFiles)
   } catch (error) {
     console.error(error)
     return res.status(500).json({ error })

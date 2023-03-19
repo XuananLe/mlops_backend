@@ -2,15 +2,12 @@ import express from 'express'
 import mongoose from 'mongoose'
 import bodyParser from 'body-parser'
 import fileupload from 'express-fileupload'
-import dotenv from 'dotenv'
 import helmet from 'helmet'
 import cors from 'cors'
 import routes from '#api/routes/index.js'
+import config from '#src/config/config.js'
 
-dotenv.config()
 const app = express()
-const PORT = process.env.PORT
-const DATABASE_URL = process.env.DATABASE_URL
 
 // middlewares
 app.use(cors())
@@ -23,11 +20,11 @@ app.use(routes)
 
 mongoose.set('strictQuery', true)
 mongoose
-  .connect(DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(config.databaseURL, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log('Connected to DB')
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`)
+    app.listen(config.port, () => {
+      console.log(`Server is running on port ${config.port}`)
     })
   })
   .catch((err) => {
