@@ -1,11 +1,8 @@
 import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
 import bcrypt from 'bcrypt'
+import config from '#src/config/config.js'
 import { generateToken } from '#api/utils/jwt.util.js'
 import User from '#api/models/user.model.js'
-
-// TODO: Group all to app config, using dotenv once
-dotenv.config()
 
 const Login = async (req, res, next) => {
   try {
@@ -18,12 +15,12 @@ const Login = async (req, res, next) => {
     if (passwordMatch) {
       const accessToken = await generateToken(
         { _id: user._id },
-        process.env.ACCESS_TOKEN_SECRET,
+        config.accessTokenSecret,
         '1h'
       )
       const refreshToken = await generateToken(
         { _id: user._id },
-        process.env.REFRESH_TOKEN_SECRET,
+        config.refreshTokenSecret,
         '30d'
       )
       await updateRefreshToken(user._id, refreshToken)
@@ -78,10 +75,10 @@ const RefreshToken = async (req, res) => {
     return res.status(403).json({ message: 'Invalid refresh token' })
   }
   try {
-    jwt.verify(refreshTokenFromClient, process.env.REFRESH_TOKEN_SECRET)
+    jwt.verify(refreshTokenFromClient, config.refreshTokenSecret)
     const accessToken = await generateToken(
       { _id: user._id },
-      process.env.ACCESS_TOKEN_SECRET,
+      config.accessTokenSecret,
       '1h'
     )
     return res.status(200).json({ access_token: accessToken })

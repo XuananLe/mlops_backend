@@ -40,7 +40,8 @@ const UploadFiles = async (req) => {
   }
 
   try {
-    await uploadFiles(project.code, req.files.files, type)
+    const uploadedFiles = await uploadFiles(project._id, req.files.files, type)
+    return uploadedFiles
   } catch (error) {
     console.error(error)
     throw new Error(error)

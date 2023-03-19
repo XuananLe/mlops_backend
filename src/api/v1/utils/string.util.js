@@ -8,11 +8,13 @@ const randomString = (length) => {
   return result
 }
 
-// Remove parent directory of path
-// E.g. train/cat/cat_01.jpg => cat/cat_01.jpg
-const removeParentDir = (path) => {
-  // increase idx to remove leading slash
-  return path.slice(path.indexOf('/') + 1)
+// E.g. images/cat/cat_01.jpg => label: cat, path: cat/cat_01.jpg
+// TODO: Handle case len(pathArray) < 2
+const getLabelAndFilePath = (path) => {
+  const pathArray = path.split('/')
+  const label = pathArray[1]
+  const filePath = pathArray.slice(1).join('/')
+  return { label, path: filePath }
 }
 
-export { randomString, removeParentDir }
+export { randomString, getLabelAndFilePath }

@@ -1,5 +1,5 @@
 const PROJECT_CODE_LEN = 10
-
+const GCS_HOST = 'https://storage.googleapis.com'
 const ALLOWED_FILE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp']
 
 const ProjectTypes = Object.freeze({
@@ -19,4 +19,11 @@ const UploadTypes = Object.freeze({
   FOLDER: 1,
 })
 
-export { PROJECT_CODE_LEN, ProjectTypes, ProjectCodePrefixes, UploadTypes, ALLOWED_FILE_EXTENSIONS }
+export {
+  PROJECT_CODE_LEN,
+  GCS_HOST,
+  ProjectTypes,
+  ProjectCodePrefixes,
+  UploadTypes,
+  ALLOWED_FILE_EXTENSIONS,
+}
