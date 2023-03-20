@@ -77,5 +77,19 @@ const UpsertAll = async (projectID, labels) => {
   }
 }
 
-const LabelService = { List, Get, Create, Update, Delete, UpsertAll }
+const GetLabelMap = async (projectID) => {
+  try {
+    const labels = await Label.find({ project_id: projectID })
+    const labelMap = {}
+    labels.forEach(label => {
+      labelMap[label.name] = label._id
+    });
+    return labelMap
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+}
+
+const LabelService = { List, Get, Create, Update, Delete, UpsertAll, GetLabelMap }
 export default LabelService
