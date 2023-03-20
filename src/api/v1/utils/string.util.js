@@ -17,4 +17,8 @@ const getLabelAndFilePath = (path) => {
   return { label, path: filePath }
 }
 
-export { randomString, getLabelAndFilePath }
+const randomUID = () => {
+  return randomString(8)
+}
+
+export { randomString, randomUID, getLabelAndFilePath }

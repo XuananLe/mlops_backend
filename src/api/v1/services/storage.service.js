@@ -1,27 +1,78 @@
 import config from '#src/config/config.js'
+import mongoose from 'mongoose'
 import { UploadTypes, ALLOWED_FILE_EXTENSIONS, GCS_HOST } from '../data/constants.js'
 import LabelService from './label.service.js'
-import { getLabelAndFilePath } from '../utils/string.util.js'
+import { getLabelAndFilePath, randomUID } from '../utils/string.util.js'
+import Project from '../models/project.model.js'
 import Dataset from '../models/dataset.model.js'
+import Image from '../models/image.model.js'
 
 const UploadFiles = async (projectID, files, uploadType) => {
   try {
     const { labels, validFiles } = parseAndValidateFiles(files, uploadType)
-    const objKeyPrefix = `images/${projectID}`
-    const uploadedFiles = await uploadFilesToGCS(validFiles, objKeyPrefix, uploadType)
+    const uploadedFiles = await uploadFilesToGCS(validFiles, projectID, uploadType)
 
-    // const insertingLabels = labels.map((label) => ({ project_id: projectID, name: label }))
-    // await LabelService.UpsertAll(projectID, insertingLabels)
+    // Upload folder
+    if (labels.length > 0) {
+      const insertingLabels = labels.map((label) => ({
+        project_id: projectID,
+        name: label,
+      }))
+      await LabelService.UpsertAll(projectID, insertingLabels)
+    }
 
-    // // TODO: Refactor code
-    // const datasetURL = `${config.storageBucketURL}/${objKeyPrefix}/*/*.jpg`
-    // const dataset = new Dataset({ base_url: datasetURL, project_id: projectID })
-    // await dataset.save()
-    return uploadedFiles
+    const dataset = new Dataset({
+      key: `label/${projectID}`,
+      pattern: `gs://${config.storageBucketName}/label/${projectID}/*/*`,
+      project_id: projectID,
+    })
+    await dataset.save()
+
+    const uploadedFilesInfo = await insertUploadedFiles(uploadedFiles, projectID, dataset._id)
+    return { files: uploadedFilesInfo, labels }
   } catch (error) {
     console.error(error)
     throw new Error(error)
   }
+}
+
+const insertUploadedFiles = async (uploadedFiles, projectID, datasetID) => {
+  const imageURLPrefix = `${GCS_HOST}/${config.storageBucketName}`
+  const insertingFiles = []
+  const uploadedFilesInfo = []
+  try {
+    const labelMap = await LabelService.GetLabelMap(projectID)
+    uploadedFiles.forEach((file) => {
+      const uid = randomUID()
+      const baseInfo = {
+        name: file.name,
+        project_id: projectID,
+        uid,
+      }
+      insertingFiles.push({
+        ...baseInfo,
+        url: `${imageURLPrefix}/images/${file.key}`,
+        is_original: true,
+      })
+
+      const labelingImage = {
+        ...baseInfo,
+        url: `${imageURLPrefix}/label/${file.key}`,
+        is_original: false,
+        dataset_id: datasetID,
+      }
+      if (file.label.length > 0) {
+        labelingImage.label_id = labelMap[file.label]
+      }
+      insertingFiles.push(labelingImage)
+      uploadedFilesInfo.push({ url: labelingImage.url, label: file.label, uid })
+    })
+    await Image.insertMany(insertingFiles)
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+  return uploadedFilesInfo
 }
 
 const parseAndValidateFiles = (files, uploadType) => {
@@ -61,14 +112,14 @@ const isAllowedExtension = (fileName) => {
 }
 
 // TODO: using socket for realtime rendering
-const uploadFilesToGCS = async (files, prefix, uploadType) => {
+const uploadFilesToGCS = async (files, projectID, uploadType) => {
   const timeNowUnix = new Date().getTime()
   const batchSize = 32
   const uploadedFiles = []
   for (let i = 0; i < files.length; i += batchSize) {
     const promises = files
       .slice(i, i + batchSize)
-      .map((file) => uploadFile(file, prefix, uploadType))
+      .map((file) => uploadFile(file, projectID, uploadType))
     const results = await Promise.allSettled(promises)
     results.forEach((result) => {
       if (result.status !== 'fulfilled') {
@@ -82,52 +133,73 @@ const uploadFilesToGCS = async (files, prefix, uploadType) => {
   const timeDiff = (doneTime - timeNowUnix) / 1000
   console.log(`Successfully uploaded ${files.length} file(s), total time: ${timeDiff} seconds`)
   return uploadedFiles
-  // const promises = files.map((file) => uploadFile(file, prefix, uploadType))
-  // try {
-  //   const results = await Promise.allSettled(promises)
-  //   const doneTime = new Date().getTime()
-  //   const timeDiff = (doneTime - timeNowUnix) / 1000
-  //   console.log(`Successfully uploaded ${files.length} file(s), total time: ${timeDiff} seconds`)
-  //   const uploadedFiles = results.map(result => result.value)
-  //   return uploadedFiles
-  // } catch (error) {
-  //   console.error(error)
-  //   throw new Error(error)
-  // }
-  // for (let i = 0; i < files.length; i++) {
-  //   const bufferData = files[i].data
-  //   const fileName = files[i].name
-  //   const objKey = `${prefix}/${fileName}`
-  //   try {
-  //     await config.storageBucket.file(objKey).save(bufferData)
-  //     console.log(`Successfully uploaded: ${fileName}`)
-  //     successfulCount++
-  //     uploadedImages.push({
-  //       url: `${GCS_HOST}/${config.storageBucket}/${objKey}`
-  //     })
-  //   } catch (error) {
-  //     errorCount++
-  //     console.error(`Error uploading ${fileName}:`, error)
-  //   }
-  // }
 }
 
-const uploadFile = async (file, prefix, uploadType) => {
-  const bufferData = file.data
+const uploadFile = async (file, projectID, uploadType) => {
   const fileName = file.name
-  const objKey = `${prefix}/${fileName}`
+  // TODO: add time unix to file name, make public at file level
+  const keyWithoutPrefix = `${projectID}/${fileName}`
+  const objKey = `images/${keyWithoutPrefix}`
+  const datasetKey = `label/${keyWithoutPrefix}`
   try {
-    await config.storageBucket.file(objKey).save(bufferData)
+    await config.storageBucket.file(objKey).save(file.data)
+    const paths = fileName.split('/')
+    const name = paths[paths.length - 1]
     let label = ''
     if (uploadType == UploadTypes.FOLDER) {
-      const paths = fileName.split('/')
       // TODO: ensure paths.length > 2
       label = paths[paths.length - 2]
     }
-    return { url: `${GCS_HOST}/${config.storageBucketName}/${objKey}`, label }
+    await copyFile(objKey, datasetKey)
+    return { key: keyWithoutPrefix, name, label }
   } catch (error) {
     console.error(error)
     Promise.reject(new Error(err))
+  }
+}
+
+const copyFile = async (srcFileName, destFileName) => {
+  const copyDestination = config.storageBucket.file(destFileName)
+  const copyOptions = {
+    preconditionOpts: {
+      ifGenerationMatch: 0,
+    },
+  }
+  try {
+    await config.storageBucket.file(srcFileName).copy(copyDestination, copyOptions)
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+}
+
+const moveFile = async (srcFileName, destFileName) => {
+  const moveOptions = {
+    preconditionOpts: {
+      ifGenerationMatch: 0,
+    },
+  }
+  try {
+    await config.storageBucket.file(srcFileName).move(destFileName, moveOptions)
+    console.log(
+      `gs://${config.storageBucketName}/${srcFileName} moved to gs://${config.storageBucketName}/${destFileName}`
+    )
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+}
+
+const deleteFile = async (fileName) => {
+  const deleteOptions = {
+    ifGenerationMatch: generationMatchPrecondition,
+  }
+  try {
+    await config.storageBucket.file(fileName).delete(deleteOptions)
+    console.log(`gs://${config.storageBucketName}/${fileName} deleted`)
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
   }
 }
 
