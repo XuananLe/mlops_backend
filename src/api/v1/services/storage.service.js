@@ -44,6 +44,7 @@ const insertUploadedFiles = async (uploadedFiles, projectID, datasetID) => {
     const labelMap = await LabelService.GetLabelMap(projectID)
     uploadedFiles.forEach((file) => {
       const uid = randomUID()
+      const labelingImageID = new mongoose.Types.ObjectId()
       const baseInfo = {
         name: file.name,
         project_id: projectID,
@@ -57,6 +58,7 @@ const insertUploadedFiles = async (uploadedFiles, projectID, datasetID) => {
 
       const labelingImage = {
         ...baseInfo,
+        _id: labelingImageID,
         url: `${imageURLPrefix}/label/${file.key}`,
         is_original: false,
         dataset_id: datasetID,
@@ -65,7 +67,12 @@ const insertUploadedFiles = async (uploadedFiles, projectID, datasetID) => {
         labelingImage.label_id = labelMap[file.label]
       }
       insertingFiles.push(labelingImage)
-      uploadedFilesInfo.push({ url: labelingImage.url, label: file.label, uid })
+      uploadedFilesInfo.push({
+        _id: labelingImageID,
+        label: file.label,
+        url: labelingImage.url,
+        uid,
+      })
     })
     await Image.insertMany(insertingFiles)
   } catch (error) {

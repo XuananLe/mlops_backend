@@ -3,15 +3,13 @@ import { ProjectCodePrefixes, PROJECT_CODE_LEN } from '../data/constants.js'
 import { randomString } from '#api/utils/string.util.js'
 import { UploadFiles as uploadFiles } from './storage.service.js'
 
-const Create = async (req) => {
-  const { _id } = req.user
-  const { name, type } = req.body
+const Create = async (userID, { name, type }) => {
   if (!ProjectType.hasOwnProperty(type)) {
     return res.status(400).json({ error: 'Project type invalid' })
   }
 
   const projectCode = generateProjectCode(type)
-  const project = new Project({ name, type, code: projectCode, author: _id })
+  const project = new Project({ name, type, code: projectCode, author: userID })
   try {
     await project.save()
     return project
@@ -21,26 +19,22 @@ const Create = async (req) => {
   }
 }
 
-const UploadFiles = async (req) => {
-  const { _id } = req.user
-  const { id } = req.params
-  const { type } = req.body
-
-  const project = await Project.findOne({ _id: id }).populate('author')
+const UploadFiles = async (userID, projectID, files, uploadType) => {
+  const project = await Project.findOne({ _id: projectID }).populate('author')
   if (project == undefined) {
     throw new Error('Project not found')
   }
   // Shallow compare because project.author._id is ObjectId, _id is string
-  if (project.author._id != _id) {
+  if (project.author._id != userID) {
     throw new Error('Forbidden')
   }
 
-  if (!req.files) {
-    throw new Error('Files empty')
+  if (!files) {
+    throw new Error('Files can not be empty')
   }
 
   try {
-    const uploadedFiles = await uploadFiles(project._id, req.files.files, type)
+    const uploadedFiles = await uploadFiles(project._id, files, uploadType)
     return uploadedFiles
   } catch (error) {
     console.error(error)

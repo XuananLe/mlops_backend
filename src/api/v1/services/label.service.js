@@ -1,9 +1,8 @@
 import Label from '#api/models/label.model.js'
 
-const List = async (req) => {
-  const { id } = req.params // project id
+const List = async (projectID) => {
   try {
-    const labels = await Label.find({ project_id: id })
+    const labels = await Label.find({ project_id: projectID })
     return labels
   } catch (error) {
     console.error(error)
@@ -11,10 +10,9 @@ const List = async (req) => {
   }
 }
 
-const Get = async (req) => {
-  const { id } = req.params // label id
+const Get = async (labelID) => {
   try {
-    const label = await Label.findOne({ _id: id })
+    const label = await Label.findOne({ _id: labelID })
     // TODO: Handle case 404
     return label
   } catch (error) {
@@ -23,10 +21,8 @@ const Get = async (req) => {
   }
 }
 
-const Create = async (req) => {
-  const { id } = req.params // project id
-  const { name, description } = req.body
-  const label = new Label({ name, description, project_id: id })
+const Create = async (projectID, fields) => {
+  const label = new Label({ ...fields, project_id: projectID })
   try {
     await label.save()
     return label
@@ -36,11 +32,9 @@ const Create = async (req) => {
   }
 }
 
-const Update = async (req) => {
-  const { id } = req.params
-  const { name, description } = req.body
+const Update = async (labelID, fields) => {
   try {
-    const label = await Label.findOneAndUpdate({ _id: id }, { name, description }, { new: true })
+    const label = await Label.findOneAndUpdate({ _id: labelID }, fields, { new: true })
     return label
   } catch (error) {
     console.error(error)
@@ -48,10 +42,9 @@ const Update = async (req) => {
   }
 }
 
-const Delete = async (req) => {
-  const { id } = req.params
+const Delete = async (labelID) => {
   try {
-    await Label.delete({ _id: id })
+    await Label.delete({ _id: labelID })
   } catch (error) {
     console.error(error)
     throw new Error(error)
