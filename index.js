@@ -1,6 +1,7 @@
 import express from 'express'
 import mongoose from 'mongoose'
 import bodyParser from 'body-parser'
+import cookieParser from 'cookie-parser'
 import fileupload from 'express-fileupload'
 import helmet from 'helmet'
 import cors from 'cors'
@@ -12,6 +13,7 @@ const app = express()
 // middlewares
 app.use(cors())
 app.use(helmet())
+app.use(cookieParser())
 app.use(bodyParser.json({ limit: '30mb' }))
 app.use(bodyParser.urlencoded({ extended: true, limit: '30mb' }))
 app.use(fileupload())
