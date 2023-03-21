@@ -1,7 +1,9 @@
 import Label from '#api/models/label.model.js'
+import ProjectService from './project.service.js'
 
 const List = async (projectID) => {
   try {
+    await ProjectService.Get(projectID)
     const labels = await Label.find({ project_id: projectID })
     return labels
   } catch (error) {
@@ -13,7 +15,9 @@ const List = async (projectID) => {
 const Get = async (labelID) => {
   try {
     const label = await Label.findOne({ _id: labelID })
-    // TODO: Handle case 404
+    if (label == undefined) {
+      throw new Error('Label does not exist')
+    }
     return label
   } catch (error) {
     console.error(error)
@@ -21,9 +25,15 @@ const Get = async (labelID) => {
   }
 }
 
-const Create = async (projectID, fields) => {
-  const label = new Label({ ...fields, project_id: projectID })
+const Create = async ({ name, description, project_id }) => {
   try {
+    await ProjectService.Get(project_id)
+    const existingLabel = await Label.findOne({ project_id, name })
+    if (existingLabel != undefined) {
+      throw new Error('Label already exist')
+    }
+
+    const label = new Label({ name, description, project_id })
     await label.save()
     return label
   } catch (error) {
@@ -32,9 +42,21 @@ const Create = async (projectID, fields) => {
   }
 }
 
-const Update = async (labelID, fields) => {
+const Update = async (id, { name, description, project_id }) => {
   try {
-    const label = await Label.findOneAndUpdate({ _id: labelID }, fields, { new: true })
+    await ProjectService.Get(project_id)
+    const label = await Label.findOne({ _id: id })
+    if (label == undefined || label.project_id != project_id) {
+      throw new Error('Label does not exist')
+    }
+
+    const existingLabel = await Label.findOne({ project_id, name })
+    if (existingLabel != undefined) {
+      throw new Error('Label already exist')
+    }
+
+    await label.updateOne({ name, description, project_id })
+    // Old value
     return label
   } catch (error) {
     console.error(error)
@@ -44,7 +66,7 @@ const Update = async (labelID, fields) => {
 
 const Delete = async (labelID) => {
   try {
-    await Label.delete({ _id: labelID })
+    await Label.deleteOne({ _id: labelID })
   } catch (error) {
     console.error(error)
     throw new Error(error)
@@ -72,11 +94,12 @@ const UpsertAll = async (projectID, labels) => {
 
 const GetLabelMap = async (projectID) => {
   try {
+    await ProjectService.Get(projectID)
     const labels = await Label.find({ project_id: projectID })
     const labelMap = {}
-    labels.forEach(label => {
+    labels.forEach((label) => {
       labelMap[label.name] = label._id
-    });
+    })
     return labelMap
   } catch (error) {
     console.error(error)
