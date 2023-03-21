@@ -1,4 +1,5 @@
 import ProjectService from '../services/project.service.js'
+import LabelService from '../services/label.service.js'
 
 const Create = async (req, res) => {
   const { _id } = req.user
@@ -7,7 +8,18 @@ const Create = async (req, res) => {
     return res.json(project)
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ error: 'Internal Server Error' })
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+const Get = async (req, res) => {
+  const { id } = req.params
+  try {
+    const project = await ProjectService.Get(id)
+    return res.json(project)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: error.message })
   }
 }
 
@@ -26,6 +38,7 @@ const UploadFiles = async (req, res) => {
 
 const ProjectController = {
   Create,
+  Get,
   UploadFiles,
 }
 
