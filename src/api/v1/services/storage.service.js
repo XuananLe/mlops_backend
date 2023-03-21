@@ -63,15 +63,19 @@ const insertUploadedFiles = async (uploadedFiles, projectID, datasetID) => {
         is_original: false,
         dataset_id: datasetID,
       }
+
+      let labelID = ''
       if (file.label.length > 0) {
-        labelingImage.label_id = labelMap[file.label]
+        labelID = labelMap[file.label]
+        labelingImage.label_id = labelID
       }
       insertingFiles.push(labelingImage)
       uploadedFilesInfo.push({
         _id: labelingImageID,
         label: file.label,
-        url: labelingImage.url,
+        label_id: labelID,
         uid,
+        url: labelingImage.url,
       })
     })
     await Image.insertMany(insertingFiles)
