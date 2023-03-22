@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'
 import path from 'path'
 import { Storage } from '@google-cloud/storage'
+import { IdempotencyStrategy } from '@google-cloud/storage/build/src/storage.js'
 import { fileURLToPath } from 'url'
 
 dotenv.config()
@@ -12,13 +13,23 @@ const gcs = new Storage({
   projectId: process.env.GCP_PROJECT_ID,
 })
 
-const storageBucket = gcs.bucket(process.env.GCP_BUCKET_NAME)
+const retryOptions = {
+  autoRetry: true,
+  retryDelayMultiplier: 3,
+  totalTimeout: 500,
+  maxRetryDelay: 60,
+  maxRetries: 5,
+  idempotencyStrategy: IdempotencyStrategy.RetryAlways,
+}
+
+const storageBucket = gcs.bucket(process.env.GCP_BUCKET_NAME, retryOptions)
 const storageBucketName = process.env.GCP_BUCKET_NAME
 const storageBucketURL = `gs://${process.env.GCP_BUCKET_NAME}`
 const port = process.env.PORT
 const databaseURL = process.env.DATABASE_URL
 const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET
 const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET
+const webServiceAddr = process.env.WEB_SERVICE_ADDR
 const mlServiceAddr = process.env.ML_SERVICE_ADDR
 
 const config = {
@@ -29,6 +40,7 @@ const config = {
   storageBucketURL,
   accessTokenSecret,
   refreshTokenSecret,
+  webServiceAddr,
   mlServiceAddr,
 }
 
