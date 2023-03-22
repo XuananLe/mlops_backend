@@ -11,7 +11,24 @@ import config from '#src/config/config.js'
 const app = express()
 
 // middlewares
-app.use(cors())
+const allowedOrigins = [config.webServiceAddr, config.mlServiceAddr]
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
+  })
+)
+app.use(function (req, res, next) {
+  res.header('Access-Control-Allow-Credentials', true)
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+  next()
+})
+
 app.use(helmet())
 app.use(cookieParser())
 app.use(bodyParser.json({ limit: '30mb' }))

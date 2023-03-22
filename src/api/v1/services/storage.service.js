@@ -1,11 +1,16 @@
 import config from '#src/config/config.js'
 import mongoose from 'mongoose'
-import { UploadTypes, ALLOWED_FILE_EXTENSIONS, GCS_HOST } from '../data/constants.js'
+import {
+  UploadTypes,
+  ALLOWED_FILE_EXTENSIONS,
+  GCS_HOST,
+  UPLOAD_BATCH_SIZE,
+} from '../data/constants.js'
 import LabelService from './label.service.js'
 import { getLabelAndFilePath, randomUID } from '../utils/string.util.js'
-import Project from '../models/project.model.js'
 import Dataset from '../models/dataset.model.js'
 import Image from '../models/image.model.js'
+import DatasetService from './dataset.service.js'
 
 const UploadFiles = async (projectID, files, uploadType) => {
   try {
@@ -21,15 +26,38 @@ const UploadFiles = async (projectID, files, uploadType) => {
       await LabelService.UpsertAll(projectID, insertingLabels)
     }
 
-    const dataset = new Dataset({
+    const datasetInfo = {
       key: `label/${projectID}`,
       pattern: `gs://${config.storageBucketName}/label/${projectID}/*/*`,
       project_id: projectID,
-    })
-    await dataset.save()
+    }
+    const dataset = await DatasetService.Upsert(datasetInfo)
 
     const uploadedFilesInfo = await insertUploadedFiles(uploadedFiles, projectID, dataset._id)
     return { files: uploadedFilesInfo, labels }
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+}
+
+const DeleteFiles = async (keys) => {
+  const successFiles = []
+  const errorFiles = []
+  try {
+    const promises = keys.map((key) => deleteFile(key))
+    const results = await Promise.allSettled(promises)
+    results.forEach((result, idx) => {
+      if (result.status !== 'fulfilled') {
+        console.error(result.reason)
+        errorFiles.push(keys[idx])
+      } else {
+        successFiles.push(keys[idx])
+      }
+    })
+    console.log(
+      `${successFiles.length} file(s) deleted successfully, ${errorFiles.length} error(s).`
+    )
   } catch (error) {
     console.error(error)
     throw new Error(error)
@@ -52,6 +80,7 @@ const insertUploadedFiles = async (uploadedFiles, projectID, datasetID) => {
       }
       insertingFiles.push({
         ...baseInfo,
+        key: `images/${file.key}`,
         url: `${imageURLPrefix}/images/${file.key}`,
         is_original: true,
       })
@@ -59,6 +88,7 @@ const insertUploadedFiles = async (uploadedFiles, projectID, datasetID) => {
       const labelingImage = {
         ...baseInfo,
         _id: labelingImageID,
+        key: `label/${file.key}`,
         url: `${imageURLPrefix}/label/${file.key}`,
         is_original: false,
         dataset_id: datasetID,
@@ -171,13 +201,8 @@ const uploadFile = async (file, projectID, uploadType) => {
 
 const copyFile = async (srcFileName, destFileName) => {
   const copyDestination = config.storageBucket.file(destFileName)
-  const copyOptions = {
-    preconditionOpts: {
-      ifGenerationMatch: 0,
-    },
-  }
   try {
-    await config.storageBucket.file(srcFileName).copy(copyDestination, copyOptions)
+    await config.storageBucket.file(srcFileName).copy(copyDestination)
   } catch (error) {
     console.error(error)
     throw new Error(error)
@@ -185,13 +210,8 @@ const copyFile = async (srcFileName, destFileName) => {
 }
 
 const moveFile = async (srcFileName, destFileName) => {
-  const moveOptions = {
-    preconditionOpts: {
-      ifGenerationMatch: 0,
-    },
-  }
   try {
-    await config.storageBucket.file(srcFileName).move(destFileName, moveOptions)
+    await config.storageBucket.file(srcFileName).move(destFileName)
     console.log(
       `gs://${config.storageBucketName}/${srcFileName} moved to gs://${config.storageBucketName}/${destFileName}`
     )
@@ -201,17 +221,15 @@ const moveFile = async (srcFileName, destFileName) => {
   }
 }
 
-const deleteFile = async (fileName) => {
-  const deleteOptions = {
-    ifGenerationMatch: generationMatchPrecondition,
-  }
+const deleteFile = async (fileObjKey) => {
   try {
-    await config.storageBucket.file(fileName).delete(deleteOptions)
-    console.log(`gs://${config.storageBucketName}/${fileName} deleted`)
+    await config.storageBucket.file(fileObjKey).delete()
+    console.log(`gs://${config.storageBucketName}/${fileObjKey} deleted`)
   } catch (error) {
     console.error(error)
     throw new Error(error)
   }
 }
 
-export { UploadFiles }
+const StorageService = { UploadFiles, DeleteFiles }
+export default StorageService
