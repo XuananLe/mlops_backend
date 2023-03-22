@@ -1,13 +1,11 @@
 import ProjectService from '../services/project.service.js'
-import LabelService from '../services/label.service.js'
 
-const Create = async (req, res) => {
+const List = async (req, res) => {
   const { _id } = req.user
   try {
-    const project = await ProjectService.Create(_id, req.body)
-    return res.json(project)
+    const projects = await ProjectService.List(_id)
+    return res.json(projects)
   } catch (error) {
-    console.error(error)
     return res.status(500).json({ error: error.message })
   }
 }
@@ -18,7 +16,39 @@ const Get = async (req, res) => {
     const project = await ProjectService.Get(id)
     return res.json(project)
   } catch (error) {
-    console.error(error)
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+const Create = async (req, res) => {
+  const { _id } = req.user
+  try {
+    const project = await ProjectService.Create(_id, req.body)
+    return res.json(project)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+const Update = async (req, res) => {
+  const { _id } = req.user
+  const { id } = req.params
+  const { name } = req.body
+  try {
+    await ProjectService.Update(_id, id, { name })
+    return res.sendStatus(200)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+const Delete = async (req, res) => {
+  const { _id } = req.user
+  const { id } = req.params
+  try {
+    await ProjectService.Delete(_id, id)
+    return res.sendStatus(200)
+  } catch (error) {
     return res.status(500).json({ error: error.message })
   }
 }
@@ -37,8 +67,11 @@ const UploadFiles = async (req, res) => {
 }
 
 const ProjectController = {
-  Create,
+  List,
   Get,
+  Create,
+  Update,
+  Delete,
   UploadFiles,
 }
 

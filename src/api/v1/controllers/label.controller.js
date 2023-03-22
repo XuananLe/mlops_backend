@@ -37,8 +37,8 @@ const Update = async (req, res) => {
   const { id } = req.params
   const { name, description, project_id } = req.body
   try {
-    const label = await LabelService.Update(id, { name, description, project_id })
-    return res.json(label)
+    await LabelService.Update(id, { name, description, project_id })
+    return res.sendStatus(200)
   } catch (error) {
     console.error(error)
     return res.status(500).json({ error: error.message })

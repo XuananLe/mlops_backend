@@ -1,7 +1,34 @@
 import Project from '#api/models/project.model.js'
+import Image from '#api/models/image.model.js'
 import { ProjectCodePrefixes, PROJECT_CODE_LEN, ProjectTypes } from '../data/constants.js'
 import { randomString } from '#api/utils/string.util.js'
-import { UploadFiles as uploadFiles } from './storage.service.js'
+import StorageService from './storage.service.js'
+import LabelService from './label.service.js'
+import DatasetService from './dataset.service.js'
+import ImageService from './image.service.js'
+
+const List = async (userID) => {
+  try {
+    const projects = await Project.find({ author: userID })
+    return projects
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+}
+
+const Get = async (projectID) => {
+  try {
+    const project = await Project.findOne({ _id: projectID })
+    if (project == undefined) {
+      throw new Error('Project does not exist')
+    }
+    return project
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+}
 
 const Create = async (userID, { name, type }) => {
   if (!ProjectTypes.hasOwnProperty(type)) {
@@ -24,13 +51,40 @@ const Create = async (userID, { name, type }) => {
   }
 }
 
-const Get = async (projectID) => {
+const Update = async (userID, projectID, { name }) => {
   try {
-    const project = await Project.findOne({ _id: projectID })
+    const project = await Project.findOne({ _id: projectID, author: userID })
     if (project == undefined) {
       throw new Error('Project does not exist')
     }
-    return project
+
+    const existingProject = await Project.findOne({ _id: projectID, author: userID, name })
+    if (existingProject != undefined) {
+      throw new Error('Project name is already taken')
+    }
+    await project.updateOne({ name })
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+}
+
+const Delete = async (userID, projectID) => {
+  try {
+    const project = await Project.findOne({ _id: projectID, author: userID })
+    if (project == undefined) {
+      throw new Error('Project does not exist')
+    }
+
+    const images = await Image.find({ project_id: projectID })
+    if (images && images.length > 0) {
+      const imageKeys = images.map((image) => image.key)
+      await StorageService.DeleteFiles(imageKeys)
+      await ImageService.DeleteByProject(projectID)
+      await LabelService.DeleteAllByProject(projectID)
+      await DatasetService.DeleteAllByProject(projectID)
+      await Project.deleteOne({ _id: projectID })
+    }
   } catch (error) {
     console.error(error)
     throw new Error(error)
@@ -52,7 +106,7 @@ const UploadFiles = async (userID, projectID, files, uploadType) => {
   }
 
   try {
-    const uploadedFiles = await uploadFiles(project._id, files, uploadType)
+    const uploadedFiles = await StorageService.UploadFiles(project._id, files, uploadType)
     return uploadedFiles
   } catch (error) {
     console.error(error)
@@ -66,10 +120,6 @@ const generateProjectCode = (projectType) => {
   return `${prefix}-${code}`
 }
 
-const ProjectService = {
-  Create,
-  Get,
-  UploadFiles,
-}
+const ProjectService = { List, Get, Create, Update, Delete, UploadFiles }
 
 export default ProjectService

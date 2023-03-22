@@ -56,8 +56,6 @@ const Update = async (id, { name, description, project_id }) => {
     }
 
     await label.updateOne({ name, description, project_id })
-    // Old value
-    return label
   } catch (error) {
     console.error(error)
     throw new Error(error)
@@ -66,6 +64,7 @@ const Update = async (id, { name, description, project_id }) => {
 
 const Delete = async (labelID) => {
   try {
+    // TODO: clear images label
     await Label.deleteOne({ _id: labelID })
   } catch (error) {
     console.error(error)
@@ -92,6 +91,25 @@ const UpsertAll = async (projectID, labels) => {
   }
 }
 
+const DeleteAll = async (labels) => {
+  const labelIDs = labels.map((label) => label._id)
+  try {
+    await Label.deleteMany({ _id: { $in: labelIDs } })
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+}
+
+const DeleteAllByProject = async (projectID) => {
+  try {
+    await Label.deleteMany({ project_id: projectID })
+  } catch (error) {
+    console.error(error)
+    throw new Error(error)
+  }
+}
+
 const GetLabelMap = async (projectID) => {
   try {
     await ProjectService.Get(projectID)
@@ -107,5 +125,15 @@ const GetLabelMap = async (projectID) => {
   }
 }
 
-const LabelService = { List, Get, Create, Update, Delete, UpsertAll, GetLabelMap }
+const LabelService = {
+  List,
+  Get,
+  Create,
+  Update,
+  Delete,
+  UpsertAll,
+  DeleteAll,
+  DeleteAllByProject,
+  GetLabelMap,
+}
 export default LabelService
