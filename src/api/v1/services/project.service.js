@@ -79,6 +79,7 @@ const Delete = async (userID, projectID) => {
     const images = await Image.find({ project_id: projectID })
     if (images && images.length > 0) {
       const imageKeys = images.map((image) => image.key)
+      // TODO: Use transaction
       await StorageService.DeleteFiles(imageKeys)
       await ImageService.DeleteByProject(projectID)
       await LabelService.DeleteAllByProject(projectID)

@@ -1,4 +1,5 @@
 import Label from '#api/models/label.model.js'
+import Image from '#api/models/image.model.js'
 import ProjectService from './project.service.js'
 
 const List = async (projectID) => {
@@ -64,7 +65,7 @@ const Update = async (id, { name, description, project_id }) => {
 
 const Delete = async (labelID) => {
   try {
-    // TODO: clear images label
+    await Image.updateMany({ label_id: labelID }, { $unset: { label_id: 1 } })
     await Label.deleteOne({ _id: labelID })
   } catch (error) {
     console.error(error)
