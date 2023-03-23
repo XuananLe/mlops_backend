@@ -35,14 +35,15 @@ const Create = async (userID, { name, type }) => {
     return res.status(400).json({ error: 'Project type invalid' })
   }
 
-  const existingProject = await Project.findOne({ name })
-  if (existingProject != undefined) {
-    throw new Error('Project already exist')
-  }
-
-  const projectCode = generateProjectCode(type)
-  const project = new Project({ name, type, code: projectCode, author: userID })
   try {
+    const existingProject = await Project.findOne({ name })
+    if (existingProject != undefined) {
+      throw new Error('Project already exist')
+    }
+
+    const projectCode = generateProjectCode(type)
+    const project = new Project({ name, type, code: projectCode, author: userID })
+
     await project.save()
     return project
   } catch (error) {
@@ -93,20 +94,20 @@ const Delete = async (userID, projectID) => {
 }
 
 const UploadFiles = async (userID, projectID, files, uploadType) => {
-  const project = await Project.findOne({ _id: projectID }).populate('author')
-  if (project == undefined) {
-    throw new Error('Project not found')
-  }
-  // Shallow compare because project.author._id is ObjectId, _id is string
-  if (project.author._id != userID) {
-    throw new Error('Forbidden')
-  }
-
-  if (!files) {
-    throw new Error('Files can not be empty')
-  }
-
   try {
+    const project = await Project.findOne({ _id: projectID }).populate('author')
+    if (project == undefined) {
+      throw new Error('Project not found')
+    }
+    // Shallow compare because project.author._id is ObjectId, _id is string
+    if (project.author._id != userID) {
+      throw new Error('Forbidden')
+    }
+
+    if (!files) {
+      throw new Error('Files can not be empty')
+    }
+
     const uploadedFiles = await StorageService.UploadFiles(project._id, files, uploadType)
     return uploadedFiles
   } catch (error) {

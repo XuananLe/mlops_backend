@@ -1,3 +1,4 @@
+import ImageService from '../services/image.service.js'
 import LabelService from '../services/label.service.js'
 
 const List = async (req, res) => {
