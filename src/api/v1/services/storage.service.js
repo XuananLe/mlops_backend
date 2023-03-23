@@ -1,14 +1,15 @@
 import config from '#src/config/config.js'
+import path from 'path'
 import mongoose from 'mongoose'
 import {
   UploadTypes,
   ALLOWED_FILE_EXTENSIONS,
   GCS_HOST,
   UPLOAD_BATCH_SIZE,
+  FILE_NAME_LEN,
 } from '../data/constants.js'
 import LabelService from './label.service.js'
-import { getLabelAndFilePath, randomUID } from '../utils/string.util.js'
-import Dataset from '../models/dataset.model.js'
+import { getLabelAndFilePath, randomString, randomUID } from '../utils/string.util.js'
 import Image from '../models/image.model.js'
 import DatasetService from './dataset.service.js'
 
@@ -25,7 +26,7 @@ const UploadFiles = async (projectID, files, uploadType) => {
       }))
       await LabelService.UpsertAll(projectID, insertingLabels)
     }
-
+    const labelMap = await LabelService.GetLabelMap(projectID)
     const datasetInfo = {
       key: `label/${projectID}`,
       pattern: `gs://${config.storageBucketName}/label/${projectID}/*/*`,
@@ -33,8 +34,18 @@ const UploadFiles = async (projectID, files, uploadType) => {
     }
     const dataset = await DatasetService.Upsert(datasetInfo)
 
-    const uploadedFilesInfo = await insertUploadedFiles(uploadedFiles, projectID, dataset._id)
-    return { files: uploadedFilesInfo, labels }
+    const uploadedFilesInfo = await insertUploadedFiles(
+      uploadedFiles,
+      projectID,
+      dataset._id,
+      labelMap
+    )
+    // Convert label map to array of labels: { id, value }
+    const labelsWithID = Object.entries(labelMap).map(([label, id]) => {
+      return { id: id.toString(), value: label }
+    })
+
+    return { files: uploadedFilesInfo, labels: labelsWithID }
   } catch (error) {
     console.error(error)
     throw new Error(error)
@@ -47,6 +58,7 @@ const DeleteFiles = async (keys) => {
   try {
     const promises = keys.map((key) => deleteFile(key))
     const results = await Promise.allSettled(promises)
+    // TODO: handle error
     results.forEach((result, idx) => {
       if (result.status !== 'fulfilled') {
         console.error(result.reason)
@@ -64,12 +76,11 @@ const DeleteFiles = async (keys) => {
   }
 }
 
-const insertUploadedFiles = async (uploadedFiles, projectID, datasetID) => {
+const insertUploadedFiles = async (uploadedFiles, projectID, datasetID, labelMap) => {
   const imageURLPrefix = `${GCS_HOST}/${config.storageBucketName}`
   const insertingFiles = []
   const uploadedFilesInfo = []
   try {
-    const labelMap = await LabelService.GetLabelMap(projectID)
     uploadedFiles.forEach((file) => {
       const uid = randomUID()
       const labelingImageID = new mongoose.Types.ObjectId()
@@ -134,6 +145,7 @@ const parseAndValidateFiles = (files, uploadType) => {
       continue
     }
     if (isAllowedExtension(fileName)) {
+      files[i].name = generateUniqueFileName(files[i].name)
       validFiles.push(files[i])
     } else {
       console.error('File extension not supported: ', fileName)
@@ -155,11 +167,10 @@ const isAllowedExtension = (fileName) => {
 // TODO: using socket for realtime rendering
 const uploadFilesToGCS = async (files, projectID, uploadType) => {
   const timeNowUnix = new Date().getTime()
-  const batchSize = 32
   const uploadedFiles = []
-  for (let i = 0; i < files.length; i += batchSize) {
+  for (let i = 0; i < files.length; i += UPLOAD_BATCH_SIZE) {
     const promises = files
-      .slice(i, i + batchSize)
+      .slice(i, i + UPLOAD_BATCH_SIZE)
       .map((file) => uploadFile(file, projectID, uploadType))
     const results = await Promise.allSettled(promises)
     results.forEach((result) => {
@@ -168,7 +179,7 @@ const uploadFilesToGCS = async (files, projectID, uploadType) => {
       }
       uploadedFiles.push(result.value)
     })
-    console.log(`#${i / 32 + 1} - [${i} to ${i + batchSize}]: Upload done`)
+    console.log(`#${i / UPLOAD_BATCH_SIZE + 1} - [${i} to ${i + UPLOAD_BATCH_SIZE}]: Upload done`)
   }
   const doneTime = new Date().getTime()
   const timeDiff = (doneTime - timeNowUnix) / 1000
@@ -209,7 +220,7 @@ const copyFile = async (srcFileName, destFileName) => {
   }
 }
 
-const moveFile = async (srcFileName, destFileName) => {
+const MoveFile = async (srcFileName, destFileName) => {
   try {
     await config.storageBucket.file(srcFileName).move(destFileName)
     console.log(
@@ -231,5 +242,14 @@ const deleteFile = async (fileObjKey) => {
   }
 }
 
-const StorageService = { UploadFiles, DeleteFiles }
+const generateUniqueFileName = (originalFileName) => {
+  let paths = originalFileName.split('/')
+  const extension = path.extname(paths[paths.length - 1])
+  paths = paths.slice(0, -1)
+  paths.push(randomString(FILE_NAME_LEN))
+  const fileName = paths.join('/')
+  return `${fileName}${extension}`
+}
+
+const StorageService = { UploadFiles, DeleteFiles, MoveFile }
 export default StorageService

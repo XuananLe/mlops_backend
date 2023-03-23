@@ -1,6 +1,10 @@
+import config from '#src/config/config.js'
 import Label from '#api/models/label.model.js'
 import Image from '#api/models/image.model.js'
 import ProjectService from './project.service.js'
+import StorageService from './storage.service.js'
+import ImageService from './image.service.js'
+import { GCS_HOST } from '../data/constants.js'
 
 const List = async (projectID) => {
   try {
@@ -65,7 +69,29 @@ const Update = async (id, { name, description, project_id }) => {
 
 const Delete = async (labelID) => {
   try {
-    await Image.updateMany({ label_id: labelID }, { $unset: { label_id: 1 } })
+    const images = await Image.find({ label_id: labelID })
+    const updatingImages = []
+    const promises = images.map((image) => {
+      const keyWithoutLabel = ImageService.ReplaceLabel(image.key, true, undefined)
+      updatingImages.push({
+        $unset: { label_id: 1 },
+        $set: {
+          key: keyWithoutLabel,
+          url: `${GCS_HOST}/${config.storageBucketName}/${keyWithoutLabel}`,
+        },
+      })
+      return StorageService.MoveFile(image.key, keyWithoutLabel)
+    })
+    const results = await Promise.allSettled(promises)
+    // TODO: handle error
+    results.forEach((result, idx) => {
+      if (result.status !== 'fulfilled') {
+        console.error(result.reason)
+        console.log(`Error while move file ${images[idx].url}`)
+      }
+    })
+
+    await ImageService.UpdateAll({ label_id: labelID }, updatingImages)
     await Label.deleteOne({ _id: labelID })
   } catch (error) {
     console.error(error)
