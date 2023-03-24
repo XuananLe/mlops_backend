@@ -5,8 +5,10 @@ import cookieParser from 'cookie-parser'
 import fileupload from 'express-fileupload'
 import helmet from 'helmet'
 import cors from 'cors'
+import createError from 'http-errors'
 import routes from '#api/routes/index.js'
 import config from '#src/config/config.js'
+import morgan from 'morgan'
 
 const app = express()
 
@@ -34,8 +36,19 @@ app.use(cookieParser())
 app.use(bodyParser.json({ limit: '30mb' }))
 app.use(bodyParser.urlencoded({ extended: true, limit: '30mb' }))
 app.use(fileupload())
+app.use(morgan('tiny'))
 
 app.use(routes)
+app.use((req, res, next) => {
+  next(createError(404, 'This route does not exist'))
+})
+
+app.use((err, req, res, next) => {
+  res.json({
+    status: err.status || 500,
+    message: err.message,
+  })
+})
 
 mongoose.set('strictQuery', true)
 mongoose
