@@ -13,16 +13,8 @@ const Login = async (req, res, next) => {
     }
     const passwordMatch = bcrypt.compareSync(password, user.password)
     if (passwordMatch) {
-      const accessToken = await generateToken(
-        { _id: user._id },
-        config.accessTokenSecret,
-        '1h'
-      )
-      const refreshToken = await generateToken(
-        { _id: user._id },
-        config.refreshTokenSecret,
-        '30d'
-      )
+      const accessToken = await generateToken({ _id: user._id }, config.accessTokenSecret, '1d')
+      const refreshToken = await generateToken({ _id: user._id }, config.refreshTokenSecret, '30d')
       await updateRefreshToken(user._id, refreshToken)
       return res.status(200).json({ access_token: accessToken, refresh_token: refreshToken })
     }
@@ -76,11 +68,7 @@ const RefreshToken = async (req, res) => {
   }
   try {
     jwt.verify(refreshTokenFromClient, config.refreshTokenSecret)
-    const accessToken = await generateToken(
-      { _id: user._id },
-      config.accessTokenSecret,
-      '1h'
-    )
+    const accessToken = await generateToken({ _id: user._id }, config.accessTokenSecret, '1h')
     return res.status(200).json({ access_token: accessToken })
   } catch (error) {
     console.error(error)

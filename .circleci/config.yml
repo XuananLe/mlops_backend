@@ -1,0 +1,30 @@
+version: 2.1
+
+jobs:
+  build_and_push:
+    working_directory: ~/mlops_backend
+    environment:
+      DOCKER_IMAGE: mailnophone03/mlops_backend
+      DOCKER_TAG: latest
+    machine:
+      image: ubuntu-2204:2022.04.2
+    steps:
+      - checkout
+      - run:
+          name: Build docker image
+          command: |
+            docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
+      - run:
+          name: Push image to docker hub
+          command: |
+            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+            docker push $DOCKER_IMAGE:$DOCKER_TAG
+  workflows:
+    my-pipeline:
+      jobs:
+        - build_and_push:
+            filters:
+              branches:
+                only:
+                  - master
+                  - develop

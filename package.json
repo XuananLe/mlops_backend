@@ -29,6 +29,7 @@
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "production": "pm2-runtime index.js"
   }
 }
