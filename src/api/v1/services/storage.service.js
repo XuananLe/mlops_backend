@@ -251,5 +251,11 @@ const generateUniqueFileName = (originalFileName) => {
   return `${fileName}${extension}`
 }
 
+// const generateUniqueFileName = (originalFileName) => {
+//   const { dir, name, ext } = path.parse(originalFileName)
+//   const uniqueFileName = randomString(20)
+//   return `${dir}/${uniqueFileName}${ext}`
+// }
+
 const StorageService = { UploadFiles, DeleteFiles, MoveFile }
 export default StorageService
