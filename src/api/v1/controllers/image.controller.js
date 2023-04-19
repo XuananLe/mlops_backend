@@ -28,7 +28,7 @@ const LabelImage = async (req, res) => {
     return res.sendStatus(200)
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 

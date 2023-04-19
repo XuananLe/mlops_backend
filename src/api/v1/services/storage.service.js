@@ -29,7 +29,7 @@ const UploadFiles = async (projectID, files, uploadType) => {
     const labelMap = await LabelService.GetLabelMap(projectID)
     const datasetInfo = {
       key: `label/${projectID}`,
-      pattern: `gs://${config.storageBucketName}/label/${projectID}/*/*`,
+      pattern: `gs://${config.storageBucketName}/label/${projectID}`,
       project_id: projectID,
     }
     const dataset = await DatasetService.Upsert(datasetInfo)
@@ -48,7 +48,7 @@ const UploadFiles = async (projectID, files, uploadType) => {
     return { files: uploadedFilesInfo, labels: labelsWithID }
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -72,7 +72,7 @@ const DeleteFiles = async (keys) => {
     )
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -122,7 +122,7 @@ const insertUploadedFiles = async (uploadedFiles, projectID, datasetID, labelMap
     await Image.insertMany(insertingFiles)
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
   return uploadedFilesInfo
 }
@@ -216,7 +216,7 @@ const copyFile = async (srcFileName, destFileName) => {
     await config.storageBucket.file(srcFileName).copy(copyDestination)
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -228,7 +228,7 @@ const MoveFile = async (srcFileName, destFileName) => {
     )
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -238,7 +238,7 @@ const deleteFile = async (fileObjKey) => {
     console.log(`gs://${config.storageBucketName}/${fileObjKey} deleted`)
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 

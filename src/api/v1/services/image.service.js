@@ -33,7 +33,7 @@ const List = async (projectID) => {
     return { files, labels }
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -52,7 +52,7 @@ const UpdateAll = async (filter, images) => {
     await Image.bulkWrite(updatingImages)
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -65,7 +65,7 @@ const Delete = async (imageID) => {
     await Image.deleteMany({ uid: image.uid })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -75,7 +75,7 @@ const DeleteAll = async (images) => {
     await Image.deleteMany({ _id: { $in: imageIDs } })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -84,7 +84,7 @@ const DeleteByProject = async (projectID) => {
     await Image.deleteMany({ project_id: projectID })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -115,7 +115,7 @@ const LabelImage = async (imageID, labelID) => {
     await image.updateOne({ label_id: labelID, dataset_id: dataset._id, key: newKey, url })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 

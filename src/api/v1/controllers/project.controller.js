@@ -1,4 +1,5 @@
 import ProjectService from '../services/project.service.js'
+import DatasetService from '../services/dataset.service.js'
 
 const List = async (req, res) => {
   const { _id } = req.user
@@ -66,6 +67,20 @@ const UploadFiles = async (req, res) => {
   }
 }
 
+const TrainModel = async (req, res) => {
+  const { _id } = req.user
+  const { id } = req.params
+
+  try {
+    const data = await DatasetService.CreateTFRecordDataset(id)
+    console.log('data: ', data)
+    res.sendStatus(200)
+  } catch (error) {
+    console.error(error)
+    res.sendStatus(500)
+  }
+}
+
 const ProjectController = {
   List,
   Get,
@@ -73,6 +88,7 @@ const ProjectController = {
   Update,
   Delete,
   UploadFiles,
+  TrainModel,
 }
 
 export default ProjectController
