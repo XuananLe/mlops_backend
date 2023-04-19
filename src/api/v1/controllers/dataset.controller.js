@@ -23,7 +23,7 @@ const CreateClassificationDataset = async (req, res) => {
     return res.json({ message: 'Dataset created successfully' })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 

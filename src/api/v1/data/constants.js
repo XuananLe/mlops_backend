@@ -28,6 +28,12 @@ const DatasetTypes = Object.freeze({
   YOLOV8: 'YOLOV8',
 })
 
+const ExperimentStatuses = Object.freeze({
+  PROCESSING: 'PROCESSING',
+  DONE: 'DONE',
+  STOPPED: 'STOPPED',
+})
+
 export {
   PROJECT_CODE_LEN,
   FILE_NAME_LEN,
@@ -39,4 +45,5 @@ export {
   ProjectCodePrefixes,
   UploadTypes,
   DatasetTypes,
+  ExperimentStatuses,
 }

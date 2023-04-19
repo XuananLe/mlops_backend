@@ -1,11 +1,15 @@
+import axios from 'axios'
+import config from '#src/config/config.js'
 import Project from '#api/models/project.model.js'
 import Image from '#api/models/image.model.js'
+import Experiment from '#api/models/experiment.model.js'
 import { ProjectCodePrefixes, PROJECT_CODE_LEN, ProjectTypes } from '../data/constants.js'
 import { randomString } from '#api/utils/string.util.js'
 import StorageService from './storage.service.js'
 import LabelService from './label.service.js'
 import DatasetService from './dataset.service.js'
 import ImageService from './image.service.js'
+import ExperimentService from './experiment.service.js'
 
 const List = async (userID) => {
   try {
@@ -13,20 +17,20 @@ const List = async (userID) => {
     return projects
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
 const Get = async (projectID) => {
   try {
     const project = await Project.findOne({ _id: projectID })
-    if (project == undefined) {
+    if (!project) {
       throw new Error('Project does not exist')
     }
     return project
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -48,7 +52,7 @@ const Create = async (userID, { name, type }) => {
     return project
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -66,7 +70,7 @@ const Update = async (userID, projectID, { name }) => {
     await project.updateOne({ name })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -89,7 +93,7 @@ const Delete = async (userID, projectID) => {
     }
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -112,7 +116,34 @@ const UploadFiles = async (userID, projectID, files, uploadType) => {
     return uploadedFiles
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
+  }
+}
+
+const TrainModel = async (projectID) => {
+  try {
+    const dataset = await DatasetService.ListByProject(projectID)
+    const labelMap = await LabelService.GetLabelMap(projectID)
+    const classes = Object.keys(labelMap)
+    const experiment = await ExperimentService.LatestByProject(projectID)
+    const experimentName = experiment.name
+
+    const payload = {
+      project_id: projectID,
+      experiment_name: experimentName,
+      gcs_folder: dataset.pattern,
+      gcs_output: `gs://${config.storageBucketName}/datasets/${experimentName}/`,
+      dataset_url: `gs://${config.storageBucketName}/datasets/${experimentName}/*.tfrec`,
+      target_size: 224,
+      classes,
+      num_classes: classes.length,
+    }
+
+    const { data } = await axios.post(`${config.mlServiceAddr}/clf/train`, payload)
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
   }
 }
 
@@ -122,6 +153,6 @@ const generateProjectCode = (projectType) => {
   return `${prefix}-${code}`
 }
 
-const ProjectService = { List, Get, Create, Update, Delete, UploadFiles }
+const ProjectService = { List, Get, Create, Update, Delete, UploadFiles, TrainModel }
 
 export default ProjectService

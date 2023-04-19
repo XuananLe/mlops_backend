@@ -9,5 +9,6 @@ projectRouter.post('/', ProjectController.Create)
 projectRouter.put('/:id', ProjectController.Update)
 projectRouter.delete('/:id', ProjectController.Delete)
 projectRouter.post('/:id/upload', ProjectController.UploadFiles)
+projectRouter.post('/:id/train', ProjectController.TrainModel)
 
 export default projectRouter

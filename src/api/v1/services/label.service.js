@@ -13,7 +13,7 @@ const List = async (projectID) => {
     return labels
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -26,7 +26,7 @@ const Get = async (labelID) => {
     return label
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -43,7 +43,7 @@ const Create = async ({ name, description, project_id }) => {
     return label
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -63,7 +63,7 @@ const Update = async (id, { name, description, project_id }) => {
     await label.updateOne({ name, description, project_id })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -95,7 +95,7 @@ const Delete = async (labelID) => {
     await Label.deleteOne({ _id: labelID })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -114,7 +114,7 @@ const UpsertAll = async (projectID, labels) => {
     await Label.bulkWrite(upsertingLabels)
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -124,7 +124,7 @@ const DeleteAll = async (labels) => {
     await Label.deleteMany({ _id: { $in: labelIDs } })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -133,7 +133,7 @@ const DeleteAllByProject = async (projectID) => {
     await Label.deleteMany({ project_id: projectID })
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -148,7 +148,7 @@ const GetLabelMap = async (projectID) => {
     return labelMap
   } catch (error) {
     console.error(error)
-    throw new Error(error)
+    throw error
   }
 }
 
