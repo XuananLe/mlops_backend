@@ -13,6 +13,32 @@ const Create = async ({ experiment_name, project_id }) => {
   }
 }
 
+const Get = async (id) => {
+  try {
+    const experiment = await Experiment.findOne({ _id: id })
+    if (!experiment) {
+      throw new Error('Experiment does not exist')
+    }
+    return experiment
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+const GetByName = async (name) => {
+  try {
+    const experiment = await Experiment.findOne({ name })
+    if (!experiment) {
+      throw new Error('Experiment does not exist')
+    }
+    return experiment
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 const LatestByProject = async (projectID) => {
   try {
     const experiments = await Experiment.find({ project_id: projectID })
@@ -26,5 +52,5 @@ const LatestByProject = async (projectID) => {
   }
 }
 
-const ExperimentService = { Create, LatestByProject }
+const ExperimentService = { Create, LatestByProject, Get, GetByName }
 export default ExperimentService
