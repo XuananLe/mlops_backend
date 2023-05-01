@@ -14,9 +14,9 @@ const Create = async (body) => {
   }
 }
 
-const Get = async (run_id) => {
+const GetByName = async (name) => {
   try {
-    const run = await MLflowRun.findOne({ run_id })
+    const run = await MLflowRun.findOne({ name })
     if (!run) {
       throw new Error('Run does not exist')
     }
@@ -40,5 +40,5 @@ const GetBestExperimentRun = async (experiment_id) => {
   }
 }
 
-const RunService = { Create, Get, GetBestExperimentRun }
+const RunService = { Create, GetByName, GetBestExperimentRun }
 export default RunService
