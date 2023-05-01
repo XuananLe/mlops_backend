@@ -9,10 +9,10 @@ const Create = async (req, res) => {
   }
 }
 
-const Get = async (req, res) => {
-  const { run_id } = req.query
+const GetByName = async (req, res) => {
+  const { name } = req.query
   try {
-    const run = await RunService.Get(run_id)
+    const run = await RunService.GetByName(name)
     return res.json(run)
   } catch (error) {
     console.error(error)
@@ -30,5 +30,5 @@ const GetBestExperimentRun = async (req, res) => {
   }
 }
 
-const RunController = { Create, Get, GetBestExperimentRun }
+const RunController = { Create, GetByName, GetBestExperimentRun }
 export default RunController
