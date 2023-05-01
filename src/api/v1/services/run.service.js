@@ -14,12 +14,25 @@ const Create = async (body) => {
   }
 }
 
+const Get = async (run_id) => {
+  try {
+    const run = await MLflowRun.findOne({ run_id })
+    if (!run) {
+      throw new Error('Run does not exist')
+    }
+    return run
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 const GetBestExperimentRun = async (experiment_id) => {
   try {
     await ExperimentService.Get(experiment_id)
     const runs = await MLflowRun.find({ experiment_id }).sort('-val_accuracy')
     if (runs.length > 0) {
-        return runs[0]
+      return runs[0]
     }
   } catch (error) {
     console.error(error)
@@ -27,5 +40,5 @@ const GetBestExperimentRun = async (experiment_id) => {
   }
 }
 
-const RunService = { Create, GetBestExperimentRun }
+const RunService = { Create, Get, GetBestExperimentRun }
 export default RunService
