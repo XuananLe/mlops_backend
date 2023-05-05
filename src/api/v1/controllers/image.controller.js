@@ -1,9 +1,9 @@
 import ImageService from '../services/image.service.js'
 
 const List = async (req, res) => {
-  const { project_id } = req.query
+  const { project_id, page, size } = req.query
   try {
-    const images = await ImageService.List(project_id)
+    const images = await ImageService.List(project_id, +page, +size)
     return res.json(images)
   } catch (error) {
     return res.status(500).json({ error: error.message })
