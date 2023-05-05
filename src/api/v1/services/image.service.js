@@ -6,16 +6,20 @@ import Dataset from '../models/dataset.model.js'
 import { DatasetTypes, GCS_HOST } from '../data/constants.js'
 import StorageService from './storage.service.js'
 
-const List = async (projectID) => {
+const List = async (projectID, page, size) => {
   try {
     const project = await Project.findOne({ _id: projectID })
     if (project == undefined) {
       throw new Error('Project does not exist')
     }
 
-    const images = await Image.find({ project_id: projectID, is_original: false }).populate(
-      'label_id'
-    )
+    const filter = { project_id: projectID, is_original: false }
+    const offset = (page - 1) * size
+
+    const total = await Image.find(filter).countDocuments()
+    const totalPage = Math.ceil(total / size)
+
+    const images = await Image.find(filter).populate('label_id').skip(offset).limit(size)
     const labelNames = new Set()
     const labels = []
     const files = images.map((image) => {
@@ -30,7 +34,15 @@ const List = async (projectID) => {
 
       return { ...image.toJSON(), label }
     })
-    return { files, labels }
+    
+    return {
+      data: { files, labels },
+      meta: {
+        page,
+        size,
+        total_page: totalPage
+      }
+    }
   } catch (error) {
     console.error(error)
     throw error
