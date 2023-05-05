@@ -73,8 +73,7 @@ const TrainModel = async (req, res) => {
 
   try {
     const data = await DatasetService.CreateTFRecordDataset(id)
-    console.log('data: ', data)
-    res.sendStatus(200)
+    res.json(data)
   } catch (error) {
     console.error(error)
     res.sendStatus(500)
