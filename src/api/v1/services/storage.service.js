@@ -41,6 +41,10 @@ const UploadFiles = async (projectID, files, uploadType) => {
       dataset._id,
       labelMap
     )
+
+    const defaultPageSize = 24
+    const totalPage = Math.ceil(uploadedFilesInfo.length / defaultPageSize)
+    const fileInfo = uploadedFilesInfo.slice(0, defaultPageSize)
     // Convert label map to array of labels: { id, value }
     const labelsWithID = Object.entries(labelMap).map(([label, id]) => {
       return { id: id.toString(), value: label }
@@ -49,7 +53,11 @@ const UploadFiles = async (projectID, files, uploadType) => {
     // Update project thumbnail
     const thumbnailURL = uploadedFilesInfo[0].url
     await ProjectService.Update(projectID, { thumbnail_url: thumbnailURL })
-    return { files: uploadedFilesInfo, labels: labelsWithID }
+    return {
+      files: fileInfo,
+      labels: labelsWithID,
+      pagination: { page: 1, size: 24, total_page: totalPage },
+    }
   } catch (error) {
     console.error(error)
     throw error
