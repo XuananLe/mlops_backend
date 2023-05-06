@@ -32,11 +32,10 @@ const Create = async (req, res) => {
 }
 
 const Update = async (req, res) => {
-  const { _id } = req.user
   const { id } = req.params
   const { name } = req.body
   try {
-    await ProjectService.Update(_id, id, { name })
+    await ProjectService.Update(id, { name })
     return res.sendStatus(200)
   } catch (error) {
     return res.status(500).json({ error: error.message })

@@ -56,18 +56,20 @@ const Create = async (userID, { name, description, type }) => {
   }
 }
 
-const Update = async (userID, projectID, { name }) => {
+const Update = async (projectID, updateInfo) => {
   try {
-    const project = await Project.findOne({ _id: projectID, author: userID })
+    const project = await Project.findOne({ _id: projectID })
     if (project == undefined) {
       throw new Error('Project does not exist')
     }
 
-    const existingProject = await Project.findOne({ _id: projectID, author: userID, name })
-    if (existingProject != undefined) {
-      throw new Error('Project name is already taken')
+    if (updateInfo.name) {
+      const existingProject = await Project.findOne({ _id: projectID, name })
+      if (existingProject != undefined) {
+        throw new Error('Project name is already taken')
+      }
     }
-    await project.updateOne({ name })
+    await project.updateOne(updateInfo)
   } catch (error) {
     console.error(error)
     throw error

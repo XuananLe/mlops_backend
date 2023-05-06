@@ -7,6 +7,7 @@ const schema = new Schema(
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     type: { type: String, required: true },
     description: { type: String },
+    thumbnail_url: { type: String },
   },
   { timestamps: true }
 )
