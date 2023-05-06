@@ -13,7 +13,7 @@ import ExperimentService from './experiment.service.js'
 
 const List = async (userID) => {
   try {
-    const projects = await Project.find({ author: userID })
+    const projects = await Project.find({ author: userID }).sort('-createdAt')
     return projects
   } catch (error) {
     console.error(error)

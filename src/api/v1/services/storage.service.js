@@ -52,7 +52,7 @@ const UploadFiles = async (projectID, files, uploadType) => {
 
     // Update project thumbnail
     const thumbnailURL = uploadedFilesInfo[0].url
-    await ProjectService.Update(projectID, { thumbnail_url: thumbnailURL })
+    await ProjectService.Update(projectID, { thumbnail_url: thumbnailURL, uploaded: true })
     return {
       files: fileInfo,
       labels: labelsWithID,

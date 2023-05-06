@@ -9,6 +9,7 @@ const schema = new Schema(
     expectation_accuracy: { type: Number, required: true },
     description: { type: String },
     thumbnail_url: { type: String },
+    uploaded: { type: Boolean },
   },
   { timestamps: true }
 )
