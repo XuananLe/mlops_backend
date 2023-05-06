@@ -34,7 +34,7 @@ const Get = async (projectID) => {
   }
 }
 
-const Create = async (userID, { name, description, type }) => {
+const Create = async (userID, { name, description, expectation_accuracy, type }) => {
   if (!ProjectTypes.hasOwnProperty(type)) {
     return res.status(400).json({ error: 'Project type invalid' })
   }
@@ -46,7 +46,14 @@ const Create = async (userID, { name, description, type }) => {
     }
 
     const projectCode = generateProjectCode(type)
-    const project = new Project({ name, description, type, code: projectCode, author: userID })
+    const project = new Project({
+      name,
+      description,
+      expectation_accuracy,
+      type,
+      code: projectCode,
+      author: userID,
+    })
 
     await project.save()
     return project
