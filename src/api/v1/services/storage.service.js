@@ -12,6 +12,7 @@ import LabelService from './label.service.js'
 import { getLabelAndFilePath, randomString, randomUID } from '../utils/string.util.js'
 import Image from '../models/image.model.js'
 import DatasetService from './dataset.service.js'
+import ProjectService from './project.service.js'
 
 const UploadFiles = async (projectID, files, uploadType) => {
   try {
@@ -45,6 +46,9 @@ const UploadFiles = async (projectID, files, uploadType) => {
       return { id: id.toString(), value: label }
     })
 
+    // Update project thumbnail
+    const thumbnailURL = uploadedFilesInfo[0].url
+    await ProjectService.Update(projectID, { thumbnail_url: thumbnailURL })
     return { files: uploadedFilesInfo, labels: labelsWithID }
   } catch (error) {
     console.error(error)
