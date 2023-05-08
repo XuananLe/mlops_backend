@@ -10,6 +10,7 @@ import LabelService from './label.service.js'
 import DatasetService from './dataset.service.js'
 import ImageService from './image.service.js'
 import ExperimentService from './experiment.service.js'
+import MLModel from '../models/mlmodel.model.js'
 
 const List = async (userID) => {
   try {
@@ -156,12 +157,22 @@ const TrainModel = async (projectID) => {
   }
 }
 
+const ListModel = async (userID) => {
+  try {
+    const models = await MLModel.find({ author_id: userID }).sort('-createdAt')
+    return models
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 const generateProjectCode = (projectType) => {
   const prefix = ProjectCodePrefixes[projectType]
   const code = randomString(PROJECT_CODE_LEN)
   return `${prefix}-${code}`
 }
 
-const ProjectService = { List, Get, Create, Update, Delete, UploadFiles, TrainModel }
+const ProjectService = { List, Get, Create, Update, Delete, UploadFiles, TrainModel, ListModel }
 
 export default ProjectService

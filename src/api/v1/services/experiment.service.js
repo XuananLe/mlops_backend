@@ -1,6 +1,7 @@
 import axios from 'axios'
 import config from '#src/config/config.js'
 import Experiment from '#api/models/experiment.model.js'
+import MLModel from '#api/models/mlmodel.model.js'
 import { ExperimentStatuses } from '../data/constants.js'
 import LabelService from './label.service.js'
 import ProjectService from './project.service.js'
@@ -97,5 +98,28 @@ const GetTrainingGraph = async (experimentName) => {
   }
 }
 
-const ExperimentService = { Create, LatestByProject, Get, GetByName, DeployModel, GetTrainingGraph }
+const SaveBestModel = async (userID, experimentName) => {
+  try {
+    const experiment = await Experiment.findOne({ name: experimentName })
+    if (!experiment) {
+      throw new Error('Experiment does not exist')
+    }
+
+    const bestRun = await RunService.GetBestExperimentRun(experiment._id)
+    
+    const model = new MLModel({ 
+      name: 'Untitled Model 1', 
+      url: bestRun.best_model_url, 
+      project_id: experiment.project_id,
+      author_id: userID,
+    })
+    await model.save()
+    return model
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+const ExperimentService = { Create, LatestByProject, Get, GetByName, DeployModel, GetTrainingGraph, SaveBestModel }
 export default ExperimentService

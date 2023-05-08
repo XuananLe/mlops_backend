@@ -79,6 +79,17 @@ const TrainModel = async (req, res) => {
   }
 }
 
+const ListModel = async (req, res) => {
+  const { _id } = req.user
+  try {
+    const data = await ProjectService.ListModel(_id)
+    res.json(data)
+  } catch (error) {
+    console.error(error)
+    res.sendStatus(500)
+  }
+}
+
 const ProjectController = {
   List,
   Get,
@@ -87,6 +98,7 @@ const ProjectController = {
   Delete,
   UploadFiles,
   TrainModel,
+  ListModel
 }
 
 export default ProjectController

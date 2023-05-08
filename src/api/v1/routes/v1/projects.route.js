@@ -4,6 +4,7 @@ import ProjectController from '../../controllers/project.controller.js'
 const projectRouter = Router()
 
 projectRouter.get('/', ProjectController.List)
+projectRouter.get('/models', ProjectController.ListModel)
 projectRouter.get('/:id', ProjectController.Get)
 projectRouter.post('/', ProjectController.Create)
 projectRouter.put('/:id', ProjectController.Update)

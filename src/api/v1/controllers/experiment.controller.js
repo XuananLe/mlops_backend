@@ -43,5 +43,16 @@ const GetTrainingGraph = async (req, res) => {
   }
 }
 
-const ExperimentController = { Create, LatestByProject, DeployModel, GetTrainingGraph }
+const SaveBestModel = async (req, res) => {
+  const { _id } = req.user
+  const { experiment_name } = req.query
+  try {
+    const data = await ExperimentService.SaveBestModel(_id, experiment_name)
+    return res.json(data)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+const ExperimentController = { Create, LatestByProject, DeployModel, GetTrainingGraph, SaveBestModel }
 export default ExperimentController
