@@ -33,5 +33,15 @@ const DeployModel = async (req, res) => {
   }
 }
 
-const ExperimentController = { Create, LatestByProject, DeployModel }
+const GetTrainingGraph = async (req, res) => {
+  const { experiment_name } = req.query
+  try {
+    const data = await ExperimentService.GetTrainingGraph(experiment_name)
+    return res.json(data)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+const ExperimentController = { Create, LatestByProject, DeployModel, GetTrainingGraph }
 export default ExperimentController

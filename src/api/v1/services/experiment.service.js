@@ -80,5 +80,22 @@ const DeployModel = async (experimentName) => {
   }
 }
 
-const ExperimentService = { Create, LatestByProject, Get, GetByName, DeployModel }
+const GetTrainingGraph = async (experimentName) => {
+  try {
+    const experiment = await Experiment.findOne({ name: experimentName })
+    if (!experiment) {
+      throw new Error('Experiment does not exist')
+    }
+
+    const bestRun = await RunService.GetBestExperimentRun(experiment._id)
+    
+    const { data } = await axios.get(`${config.mlServiceAddr}/train/history?run_id=${bestRun.run_id}`)
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+const ExperimentService = { Create, LatestByProject, Get, GetByName, DeployModel, GetTrainingGraph }
 export default ExperimentService
