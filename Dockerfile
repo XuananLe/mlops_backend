@@ -10,5 +10,5 @@ RUN yarn global add pm2
 RUN yarn
 
 COPY . .
-CMD ["yarn", "production"]
+CMD ["yarn", "dev"]
 EXPOSE 5500
