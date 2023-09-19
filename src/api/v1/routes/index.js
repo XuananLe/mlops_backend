@@ -7,6 +7,6 @@ routes.get('/api/healthz', (req, res) => {
   return res.json({ status: 'OK' })
 })
 
-routes.use('/v1', routeV1)
+routes.use('/', routeV1)
 
 export default routes

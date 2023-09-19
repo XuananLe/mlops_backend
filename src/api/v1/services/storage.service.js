@@ -218,7 +218,7 @@ const uploadFile = async (file, projectID, uploadType) => {
     return { key: keyWithoutPrefix, name, label }
   } catch (error) {
     console.error(error)
-    Promise.reject(new Error(err))
+    Promise.reject(new Error(error))
   }
 }
 

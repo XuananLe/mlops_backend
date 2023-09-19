@@ -5,8 +5,8 @@
   "main": "index.js",
   "license": "MIT",
   "imports": {
-    "#src/*": "./src/*",
-    "#api/*": "./src/api/v1/*"
+    "#src/*.js": "./src/*.js",
+    "#api/*.js": "./src/api/v1/*.js"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"
@@ -19,6 +19,7 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
+    "eslint-config-airbnb": "^19.0.4",
     "express": "^4.18.2",
     "express-fileupload": "^1.4.0",
     "helmet": "^6.0.1",
