@@ -9,8 +9,7 @@ dotenv.config()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const gcs = new Storage({
-  keyFilename: path.join(__dirname, process.env.GCP_SERVICE_ACCOUNT),
-  projectId: process.env.GCP_PROJECT_ID,
+  keyFilename: path.join(__dirname, 'service-account.json')
 })
 
 const retryOptions = {
